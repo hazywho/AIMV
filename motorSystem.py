@@ -1,6 +1,6 @@
 import RPi.GPIO as GPIO
 from gpiozero.pins.pigpio import PiGPIOFactory
-from time import sleep
+import time
 from gpiozero import Servo
 
 GPIO.setmode(GPIO.BCM)
@@ -17,6 +17,9 @@ M3A = 20
 M4A = 16
 M3B = 21
 M4B = 1
+TRIG_PIN = 23
+ECHO_PIN = 24
+
 GPIO.setup(M1A,GPIO.OUT)
 GPIO.setup(M1B,GPIO.OUT)
 GPIO.setup(M2A,GPIO.OUT)
@@ -25,6 +28,8 @@ GPIO.setup(M3A,GPIO.OUT)
 GPIO.setup(M3B,GPIO.OUT)
 GPIO.setup(M4A,GPIO.OUT)
 GPIO.setup(M4B,GPIO.OUT)
+GPIO.setup(TRIG_PIN, GPIO.OUT)
+GPIO.setup(ECHO_PIN, GPIO.IN)
 
 #-----------------------servo rotation------------------------------#
 
@@ -83,28 +88,41 @@ def goright():
     GPIO.output(M2A,1)
     GPIO.output(M3A,1)
     GPIO.output(M4B,1)
+    
+def getDistance():
+    GPIO.output(TRIG_PIN, GPIO.HIGH)
+    time.sleep(0.00001)
+    GPIO.output(TRIG_PIN, GPIO.LOW)
+    while GPIO.input(ECHO_PIN)==0:
+        pulse_start = time.time()
+    while GPIO.input(ECHO_PIN)==1:
+        pulse_end = time.time()
+        
+    pulseDuration = pulse_end-pulse_start
+    dist = pulseDuration*34300/2
+    return dist
 
-sleeptime=5
-while True:
-    # servo.turn()
-    gostraight()
-    sleep(sleeptime)
-    stop()
-    goback()
-    sleep(sleeptime)
-    stop()
-    turnleft()
-    sleep(sleeptime)
-    stop()
-    turnright()
-    sleep(sleeptime)
-    stop()
-    goleft()
-    sleep(sleeptime)
-    stop()
-    goright()
-    sleep(sleeptime)
+# sleeptime=5
+# while True:
+#     # servo.turn()
+#     gostraight()
+#     time.sleep(sleeptime)
+#     stop()
+#     goback()
+#     time.sleep(sleeptime)
+#     stop()
+#     turnleft()
+#     time.sleep(sleeptime)
+#     stop()
+#     turnright()
+#     time.sleep(sleeptime)
+#     stop()
+#     goleft()
+#     time.sleep(sleeptime)
+#     stop()
+#     goright()
+#     time.sleep(sleeptime)
 
-    # servo.returnToZero()
-    stop()
-    sleep(sleeptime)
+#     # servo.returnToZero()
+#     stop()
+#     time.sleep(sleeptime)
