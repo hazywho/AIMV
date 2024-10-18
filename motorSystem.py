@@ -1,6 +1,7 @@
 import RPi.GPIO as GPIO
 from gpiozero.pins.pigpio import PiGPIOFactory
 import time
+import math
 from gpiozero import Servo
 
 GPIO.setmode(GPIO.BCM)
@@ -34,15 +35,28 @@ GPIO.setup(ECHO_PIN, GPIO.IN)
 #-----------------------servo rotation------------------------------#
 
 factory = PiGPIOFactory()
+#the hinge door servo
 servo1  = Servo(1, pin_factory=factory,
                            min_pulse_width=(0.5/1000), max_pulse_width=(2.5/1000))
-servo1.value = 0
+servo1.value = None
 
+#the camera servo
+servoCam = Servo(1, pin_factory=factory,
+                           min_pulse_width=(0.5/1000), max_pulse_width=(2.5/1000))
+servoCam.value = None
 
-def turn(self, degree):
-        self.degree = degree
-        self.servo.value = degree
+def openDoor():
+    for v1 in range(0,90):
+        servo1.value = math.sin(math.radians(v1))
+        time.sleep(0.05)
 
+def closeDoor():
+    for v2 in range(270,360):
+        servo1.value = math.sin(math.radians(v2))
+    
+def moveCamTo(angle):
+    servoCam.value = angle
+    
 def stop():
     GPIO.output(M1A,0)
     GPIO.output(M2A,0)
@@ -101,6 +115,7 @@ def getDistance():
     pulseDuration = pulse_end-pulse_start
     dist = pulseDuration*34300/2
     return dist
+
 
 # sleeptime=5
 # while True:
