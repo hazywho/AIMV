@@ -1,0 +1,23 @@
+Left side:
+M1A: 26
+M1B: 19
+M2A: 13
+M2B: 13
+
+Right side:
+M1A: 16
+M1B: 12
+M2A: 20
+M2B: 21
+
+Huskeylens:
+Green = SDA
+Blue = SCL
+
+Speaker: 14
+
+Ultrasonic sensor:
+TRIG: 17
+ECHO: 27
+
+Servo: 22
