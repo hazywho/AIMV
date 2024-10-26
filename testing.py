@@ -2,15 +2,12 @@ from ultralytics import YOLO
 import cv2
 import time
 import motorSystem
-import RPi.GPIO as GPIO
-from lens.predictor import protocol
 import math
 import faceDetector
 
 cap = cv2.VideoCapture(0)
 model = YOLO("yolo11n.pt")
 model.to("cuda")
-huskee = protocol("I2C")
 a=0
 addedAngles=0
 #algo to get the biggest bounding box
