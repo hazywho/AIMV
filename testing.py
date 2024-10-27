@@ -1,9 +1,7 @@
 from ultralytics import YOLO
 import cv2
-import time
+import faceDetection
 import motorSystem
-import math
-import faceDetector
 
 cap = cv2.VideoCapture(0)
 model = YOLO("yolo11n.pt")
@@ -27,6 +25,6 @@ while True:
     bottomHeight = int(height/10)
     topWidth = int(width)-bottomWidth
     topHeight = int(height)-bottomHeight
-    
+    faceDetection.getAngleY(cap=cap,frame=frame)
     #mark edge boxes
     cv2.rectangle(frame, (bottomWidth,bottomHeight),(topWidth,topHeight),color=(255,0,0),thickness=1)

@@ -3,19 +3,34 @@ import cv2
 import time
 import motorSystem
 import RPi.GPIO as GPIO
-from lens.predictor import protocol
+from lens.huskeyLensPythonLibrary import HuskyLensLibrary
 import math
+import json
+import faceDetection
+
+#setup startup critical variables
+algorthimsByteID = {
+    "ALGORITHM_OBJECT_TRACKING": "0100",
+    "ALGORITHM_FACE_RECOGNITION": "0000",
+    "ALGORITHM_OBJECT_RECOGNITION": "0200",
+    "ALGORITHM_LINE_TRACKING": "0300",
+    "ALGORITHM_COLOR_RECOGNITION": "0400",
+    "ALGORITHM_TAG_RECOGNITION": "0500",
+    "ALGORITHM_OBJECT_CLASSIFICATION": "0600",
+    "ALGORITHM_QR_CODE_RECOGNTITION": "0700",
+    "ALGORITHM_BARCODE_RECOGNTITION": "0800",
+}
 
 cap = cv2.VideoCapture(0)
 model = YOLO("yolo11n.pt")
-model.to("cuda")
-huskee = protocol("I2C")
-a=0
-addedAngles=0
+huskee = HuskyLensLibrary("I2C", "", address=0x32)
+
 #algo to get the biggest bounding box
 def getBiggest(l):
     return abs(l[2]-l[0])+abs(l[3]-l[1])
     
+a=0
+addedAngles=0
 while True:
     #declare and assign variables
     ret,frame=cap.read()
@@ -30,30 +45,25 @@ while True:
     topWidth = int(width)-bottomWidth
     topHeight = int(height)-bottomHeight
     
+    angleYforServo=faceDetection.getAngleY(cap=cap,frame=frame)
+    
     #mark edge boxes
     cv2.rectangle(frame, (bottomWidth,bottomHeight),(topWidth,topHeight),color=(255,0,0),thickness=1)
     
     #make it so that yolo only runs when choking is detected.
-    isChoking = huskee.request()    
-    if not isChoking:
-        a = math.sin(math.radians(a))
-        addedAngles+=a
-        motorSystem.moveCamTo(a)
-        if a<360:
-            a+=1
-        else:
-            a = 0
-            addedAngles=0
-    else:
+    try:
+        #if this fails then we dont need to run the bottom code dy ehahehhsheha yay
+        items = huskee.getObjectByID(2)
+        print(f"choking detected: {json.dumps(items.__dict__)}. moving to vistim position")
         #reset orientation to **about right** facing object
-        angleToMovement = map(addedAngles,-114.6,114.6,0,1)
-        if addedAngles>0:
-            motorSystem.turnleft()
-            time.sleep(angleToMovement)
-        elif addedAngles<0:
-            motorSystem.turnright()
-            time.sleep(angleToMovement)
-        motorSystem.moveCamTo(0)
+        # angleToMovement = map(addedAngles,-114.6,114.6,0,1)
+        # if addedAngles>0:
+        #     motorSystem.turnleft()
+        #     time.sleep(angleToMovement)
+        # elif addedAngles<0:
+        #     motorSystem.turnright()
+        #     time.sleep(angleToMovement)
+        motorSystem.moveCamTo(angleYforServo)
         
         #declare and assign variables 2
         prediction = model.predict(source=frame,stream_buffer=False,classes=[0],verbose=False)
@@ -87,7 +97,7 @@ while True:
                     motorSystem.turnright()
                     time.sleep(0.2)
 
-            # #move foward
+            #move foward
             # dist = motorSystem.getDistance()
             # while dist>10:
             #     motorSystem.gostraight()
@@ -100,6 +110,15 @@ while True:
         except IndexError:
             print("huh??? you are fucked")
             None
+    except IndexError:
+        a = math.sin(math.radians(a))
+        addedAngles+=a
+        motorSystem.moveCamTo(a)
+        if a<360:
+            a+=1
+        else:
+            a = 0
+            addedAngles=0
         
     cv2.imshow("frame",frame)
     if cv2.waitKey(1) & 0xFF == ord("q"):

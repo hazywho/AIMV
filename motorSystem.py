@@ -10,16 +10,17 @@ GPIO.setwarnings(False)
 myCorrection=0.45
 maxPW=(2.0+myCorrection)/1000
 minPW=(1.0-myCorrection)/1000
-M2A = 13
-M2B = 6
-M1A = 12
-M1B = 5
-M3A = 20
-M4A = 16
-M3B = 21
-M4B = 1
+M2A = 21
+M2B = 20
+M1A = 16
+M1B = 12
+M3A = 26
+M4A = 19
+M3B = 13
+M4B = 6
 TRIG_PIN = 23
 ECHO_PIN = 24
+SPEAKER = 14
 
 GPIO.setup(M1A,GPIO.OUT)
 GPIO.setup(M1B,GPIO.OUT)
@@ -35,24 +36,10 @@ GPIO.setup(ECHO_PIN, GPIO.IN)
 #-----------------------servo rotation------------------------------#
 
 factory = PiGPIOFactory()
-#the hinge door servo
-servo1  = Servo(1, pin_factory=factory,
-                           min_pulse_width=(0.5/1000), max_pulse_width=(2.5/1000))
-servo1.value = None
-
 #the camera servo
-servoCam = Servo(1, pin_factory=factory,
+servoCam = Servo(22, pin_factory=factory,
                            min_pulse_width=(0.5/1000), max_pulse_width=(2.5/1000))
 servoCam.value = None
-
-def openDoor():
-    for v1 in range(0,90):
-        servo1.value = math.sin(math.radians(v1))
-        time.sleep(0.05)
-
-def closeDoor():
-    for v2 in range(270,360):
-        servo1.value = math.sin(math.radians(v2))
     
 def moveCamTo(angle):
     servoCam.value = angle
