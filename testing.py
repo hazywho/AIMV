@@ -1,11 +1,16 @@
 from ultralytics import YOLO
 import cv2
-import faceDetection
+import time
 import motorSystem
+import RPi.GPIO as GPIO
+from lens.predictor import protocol
+import math
+import faceDetector
 
 cap = cv2.VideoCapture(0)
 model = YOLO("yolo11n.pt")
 model.to("cuda")
+huskee = protocol("I2C")
 a=0
 addedAngles=0
 #algo to get the biggest bounding box
@@ -25,6 +30,6 @@ while True:
     bottomHeight = int(height/10)
     topWidth = int(width)-bottomWidth
     topHeight = int(height)-bottomHeight
-    faceDetection.getAngleY(cap=cap,frame=frame)
+    
     #mark edge boxes
     cv2.rectangle(frame, (bottomWidth,bottomHeight),(topWidth,topHeight),color=(255,0,0),thickness=1)
