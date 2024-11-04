@@ -1,5 +1,6 @@
 from ultralytics import YOLO
 import cv2
+import pyfirmata2
 
 #algo to get the biggest bounding box
 def getBiggest(l):
@@ -36,7 +37,7 @@ def getAngleY(cap, frame):
         servoXlimit=180
         servoYlimit=90
         angle = ((round(midpoint[0]/(topWidth-bottomWidth)*servoXlimit)),(round(midpoint[1]/(topHeight-bottomHeight)*servoYlimit)))
-        return [angle[1],frame]
+        return [180-angle[1],frame]
     except IndexError:
         return ["null",frame]
 
@@ -45,6 +46,8 @@ if __name__ == "__main__":
     cap = cv2.VideoCapture(0)
     a=0
     addedAngles=0   
+    board = pyfirmata2.ArduinoNano('/dev/ttyACM0')
+    alignmentServo = board.get_pin('d:11:s')
     while True:
         #declare and assign variables
         ret,frame=cap.read()
@@ -56,6 +59,7 @@ if __name__ == "__main__":
         angle = getAngleY(cap=cap,frame=frame)
         print(angle[0])
         cv2.imshow("frame",angle[1])
+        alignmentServo.write(80)
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
         

@@ -36,7 +36,7 @@ def getAngleY(cap, frame):
         servoXlimit=180
         servoYlimit=90
         angle = ((round(midpoint[0]/(topWidth-bottomWidth)*servoXlimit)),(round(midpoint[1]/(topHeight-bottomHeight)*servoYlimit)))
-        return [angle[1],frame]
+        return [180-angle[1],frame]
     except IndexError:
         return ["null",frame]
 
