@@ -5,7 +5,7 @@ import motorSystem
 import RPi.GPIO as GPIO
 from lens.predictor import protocol
 import math
-import faceDetector
+import faceDetectorRPI
 
 cap = cv2.VideoCapture(0)
 model = YOLO("yolo11n.pt")
@@ -33,7 +33,7 @@ while True:
     
     #mark edge boxes
     # cv2.rectangle(frame, (bottomWidth,bottomHeight),(topWidth,topHeight),color=(255,0,0),thickness=1)
-    y = faceDetector.getAngleY(frame=frame)
+    y = faceDetectorRPI.getAngleY(frame=frame)
     motorSystem.moveCamTo(y)
     #make it so that yolo only runs when choking is detected.
     isChoking = huskee.request()    

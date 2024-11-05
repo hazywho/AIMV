@@ -5,7 +5,7 @@ import motorSystem
 import RPi.GPIO as GPIO
 from lens.predictor import protocol
 import math
-import faceDetector
+import faceDetectorRPI
 
 cap = cv2.VideoCapture(0)
 model = YOLO("yolo11n.pt")
