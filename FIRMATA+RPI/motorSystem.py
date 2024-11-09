@@ -83,10 +83,15 @@ class board():
         time.sleep(delay)
         
     def __init__(self, com='/dev/ttyACM0', servo_pin=12, leftM1APin=2, leftM1BPin=3, leftM2APin=4, leftM2BPin=5, rightM1APin=6,
-                 rightM1BPin=7, rightM2APin=8, rightM2BPin=9, Trig=10, Echo=11, interval=19, printLog=True):  
+                 rightM1BPin=7, rightM2APin=8, rightM2BPin=9, Trig=10, Echo=11, interval=19, printLog=True,type="arduino nano"):  
         
         print("initializing arduino...")
-        self.arduino = pyfirmata2.ArduinoNano(com)
+        if type=="arduino nano":
+            self.arduino = pyfirmata2.ArduinoNano(com)
+        elif type=="arduino":
+            self.arduino = pyfirmata2.Arduino(com)
+        else:
+            print("no type of boards mentioned found")
         self.arduino.samplingOn(interval)
         
         print("arduino initialized, starting setup...")
@@ -122,25 +127,25 @@ class board():
         
         print("finished setting up. moving onto next phase")
 
-    def testRunDCMotor(self):
+    def testRunMotor(self,tDelay=2):
         print("running tests on DC motors...")
         print("font")
-        self.front()
+        self.front(delay=tDelay)
 
         print("back")
-        self.back()
+        self.back(delay=tDelay)
         
         print("left")
-        self.left()
+        self.left(delay=tDelay)
         
         print("right")
-        self.right()
+        self.right(delay=tDelay)
         
         print("turning clockwise")
-        self.clockwise()
+        self.clockwise(delay=tDelay)
         
         print("turning counter-clockwise")
-        self.counter_clockwise()
+        self.counter_clockwise(delay=tDelay)
         
         print("testing ultrasonic sensor...")
         dist = self.getDistance()
@@ -150,7 +155,7 @@ class board():
         self.servoWrite(0)
         self.servoWrite(180)
         
-        print("test run complete! All modules working.")
+        print("test run complete! All hardware modules working.")
 
 if __name__ == "__main__":
     nano = board(com="COM8")

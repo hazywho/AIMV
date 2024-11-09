@@ -7,7 +7,7 @@ class facialDatector():
         return abs(l[2]-l[0])+abs(l[3]-l[1])
     
     def __init__(self,model_path=r"C:\Users\zanyi\Documents\GitHub\AIMV\faceDetection.pt", cap=cv2.VideoCapture(0), percentage=10):
-        print("initialising...")
+        print("initialising...",end="")
         self.model = YOLO(model_path)
         self.height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
         self.width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
@@ -20,7 +20,11 @@ class facialDatector():
         self.limitTop=round(self.height/2+self.height*percentage/100)
         self.limitBottom=round(self.height/2-self.height*percentage/100)
         self.camera=cap
-        print("done! Going to next phase...")
+        print("done!")
+        print("Going to next phase...")
+        
+    def toGPU(self):
+        self.model.to("cuda")
         
     def getVal(self,frame):
         self.frame=frame
