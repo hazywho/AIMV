@@ -5,7 +5,7 @@ import cv2
 def getBiggest(l):
     return abs(l[2]-l[0])+abs(l[3]-l[1])
 
-def getAngleY(cap, frame,percentage=10):
+def getAngleY(cap, frame,percentage=10): #parameters
     model = YOLO(r"C:\Users\zanyi\Documents\GitHub\SMART-SCHOOL-IOT-2024\runs\detect\faceDetection\weights\best.pt")
     model.to("cuda")
     height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)

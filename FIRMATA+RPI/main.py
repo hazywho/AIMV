@@ -2,9 +2,7 @@ import motorSystem
 from faceRecog import facialDatector
 import cv2
 
-
-#for reference: [self.angle[1],self.frame,[self.limitBottom,self.limitTop],[self.midpoint[0],self.midpoint[1]]] \
-    
+#for reference: [self.angle[1],self.frame,[self.limitBottom,self.limitTop],[self.midpoint[0],self.midpoint[1]]] \ 
 class mainCode():
     def __init__(self, servoMotorMovementSteps=10, servoMotorMax=100,com="COM8",verificationRecurrances=10,defaultMovement=50,GPU_Compute=True):
         print("setting up cv2...")
