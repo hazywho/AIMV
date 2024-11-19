@@ -1,6 +1,5 @@
 from HLPYTHON import HuskyLensLibrary
-import serial
-import json
+import keyboard
 
 algorthimsByteID = {
     "ALGORITHM_OBJECT_TRACKING": "0100",
@@ -51,13 +50,12 @@ class lens():
     def requestChokingStatus(self,chokingID=2):
         try:
             self.hl.getObjectByID(chokingID)
-            self.status=1
+            return 1
         except ValueError:
-            self.status = 0
-            
-        return 0
-
+            return 0
+        
     
 if __name__ == "__main__":
-    testing = lens()
-    print(testing)
+    while not keyboard.is_pressed("q"):
+        testing = lens()
+        print(testing)

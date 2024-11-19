@@ -1,6 +1,5 @@
 import time
 import serial
-import json
 
 
 commandHeaderAndAddress = "55AA11"
