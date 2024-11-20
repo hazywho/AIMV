@@ -1,26 +1,34 @@
 import motorSystem
 from faceRecog import facialDatector
 from huskylensConnection import lens
-
+from speakerSystem import speaker
 import cv2
 
 #for reference: [self.angle[1],self.frame,[self.limitBottom,self.limitTop],[self.midpoint[0],self.midpoint[1]]] \ 
 class mainCode():
-    def __init__(self, com="COM8",GPU_Compute=True,printDetails=False,distThresh=20): #distThresh is in cm
+    def __init__(self, com="COM8",GPU_Compute=True,printDetails=False,distThresh=20,defaultPath = r"C:\Users\zanyi\Documents\GitHub\AIMV\chaseAtlantic.wav"): #distThresh is in cm
         print("setting up cv2...")
         self.cap = cv2.VideoCapture(0)
         self.videoMachine = facialDatector(cap=self.cap)
         if GPU_Compute:
             print("connecting to GPU")
             self.videoMachine.toGPU()
+            
         print("setting up motor system...")
         self.motorSys=motorSystem.board(com=com)
         self.distThresh=distThresh
         self.motorSys.servoWrite(0)
+        
         print("setting up i2c connection for huskylens...",end="")
         self.hl = lens() #no need to specify port, this is done on raspberry pi.
         print("done!")
         print(self.hl) if printDetails==True else None
+        
+        print("initializing pyaudio...(you may hear some sounds)",end="")
+        self.audioMachine=speaker()
+        self.audioMachine.playAudio(path=r"C:\Users\zanyi\Documents\GitHub\AIMV\FIRMATA+RPI\pop.wav")
+        print("done!")
+        
         print("progressing to next phase...")
     
     def calibration(self,verificationRecurrances=10): #there is no x calibration yet.
@@ -66,7 +74,7 @@ class mainCode():
         else:
             self.calibration()
                     
-    def main(self):
+    def main(self,audio=r"C:\Users\zanyi\Documents\GitHub\AIMV\FIRMATA+RPI\siren.wav"):
         print("main code starting...")
         self.value,self.frame=self.getAndPredict() 
         self.movement=self.calculateServoMotorMovement(value=self.value) #adjust y value
@@ -74,16 +82,12 @@ class mainCode():
         self.motorSys.stop()
         self.repositionCarRotation()
         if self.detectForChoking():
+            self.audioMachine.playAudio(path=audio) #sound alarm
             self.runStraight() #go straight until near enough
             if self.motorSys.getDistance()<self.distThresh:
                 self.motorSys.stop()
                 #provide aid
-                
-            
-        if self.motorSys.getDistance()<100:
-            self.motorSys.stop()
-        else:
-        
+
         print(self.movement)
         cv2.imshow("output",self.value[1])
         
@@ -146,66 +150,5 @@ class mainCode():
 if __name__ == "__main__":
     system = mainCode()
     system.calibration()
+    system.main()
     
-# # for debugging
-# if __name__ == "__main__":     
-#     cap = cv2.VideoCapture(0)
-#     a=0
-#     addedAngles=0   
-#     board = pyfirmata2.ArduinoNano('/dev/ttyACM0')
-#     alignmentServo = board.get_pin('d:11:s')
-#     alignmentServo.write(0)
-#     deg=0
-#     angle=[None,None]
-#     self.calibrationFlag=0
-#     height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-#     width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-#     count=0
-#     movement=50  
-#     self.steps = 10
-#     print(f"camera width/height is (please verify): {(self.width,self.height)}")
-#     while angle[0]==None and count!=10:
-#         ret,frame=cap.read()
-#         frame = cv2.flip(frame, 1) 
-#         ret,frame=cap.read()
-#         frame = cv2.flip(frame, 1) 
-#         print("calibrating")
-#         angle = getAngleY(cap=cap,frame=frame)
-#         if angle[0]!=None:
-#             count+=1
-#             continue
-#         print(angle[0])
-#         cv2.imshow("frame",angle[1])
-#         alignmentServo.write(deg)
-#         if self.calibrationFlag:
-#             deg-=1
-#         else:
-#             deg+=1
-#         if deg==120:
-#             self.calibrationFlag=1
-#         if deg==0:
-#             self.calibrationFlag=0
-
-#     while True:
-#         ret,frame=cap.read()
-#         frame = cv2.flip(frame, 1) 
-#         #declare and assign variables
-#         angle = getAngleY(cap=cap,frame=frame)
-#         print(angle[0])
-#         cv2.imshow("frame",angle[1])
-#         if angle[0] != None:
-#             angle = getAngleY(cap=cap,frame=frame,percentage=10)
-#             if angle[3][1] <angle[2][0] and movement>0:
-#                 print(angle[3][1])
-#                 movement-=self.steps #i want to make it bezier
-#             elif angle[3][1]>angle[2][1] and movement<100:
-#                 movement+=self.steps #i want to make it bezier
-#             else:
-#                 movement+=0
-#             print(movement)
-#             alignmentServo.write(movement)
-#         if cv2.waitKey(1) & 0xFF == ord("q"):
-#             break
-        
-#     cap.release()
-#     cv2.destroyAllWindows()
