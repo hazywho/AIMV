@@ -4,12 +4,14 @@ from huskylensConnection import lens
 from speakerSystem import speaker
 import cv2
 
-#for reference: [self.angle[1],self.frame,[self.limitBottom,self.limitTop],[self.midpoint[0],self.midpoint[1]]] \ 
+#for reference: [self.angle[1],self.frame,[self.limitBottom,self.limitTop],[self.midpoint[0],self.midpoint[1]]] 
 class mainCode():
-    def __init__(self, com="COM8",GPU_Compute=True,printDetails=False,distThresh=20,defaultPath = r"C:\Users\zanyi\Documents\GitHub\AIMV\chaseAtlantic.wav"): #distThresh is in cm
+    def __init__(self, com="COM8",GPU_Compute=True,printDetails=False,distThresh=20,audioPath = r"pop.wav",model_path=r"faceDetection.pt"): #distThresh is in cm
         print("setting up cv2...")
         self.cap = cv2.VideoCapture(0)
-        self.videoMachine = facialDatector(cap=self.cap)
+        self.height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        self.width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+        self.videoMachine = facialDatector(model_path=model_path,width=self.width,height=self.height)
         if GPU_Compute:
             print("connecting to GPU")
             self.videoMachine.toGPU()
@@ -26,7 +28,7 @@ class mainCode():
         
         print("initializing pyaudio...(you may hear some sounds)",end="")
         self.audioMachine=speaker()
-        self.audioMachine.playAudio(path=r"C:\Users\zanyi\Documents\GitHub\AIMV\FIRMATA+RPI\pop.wav")
+        self.audioMachine.playAudio(path=audioPath)
         print("done!")
         
         print("progressing to next phase...")
@@ -36,64 +38,68 @@ class mainCode():
         deg=0
         calibrationFlag=False
         recurrances=0
-        flag=True
-        
-        if flag:
-            print("starting test run of hardware systems...")
-            self.motorSys.testRunMotor()
-            flag=False
-        print("starting calibration of AI lenses! (program will detect for human)")
-        value,frame=self.getAndPredict() #run AI lenses (laptop) and get back value
-        
-        cv2.imshow("frame",frame)
-        self.motorSys.servoWrite(deg)
-        #adding values to servo angles based on clockwise or anti-clockwise
-        if value[0]!=None:
-            print(f"found!, stay still. Iterations: {verificationRecurrances-recurrances}")
-            recurrances+=1
-        else:
-            recurrances=0
-            if calibrationFlag:
-                deg-=1
+        flag=False #determine whether to run hardware test or not
+        while True:
+            if flag:
+                print("starting test run of hardware systems...")
+                self.motorSys.testRunMotor()
+                flag=False
+            print("starting calibration of AI lenses! (program will detect for human)")
+            value,frame=self.getAndPredict() #run AI lenses (laptop) and get back value
+            
+            cv2.imshow("frame",frame)
+            self.motorSys.servoWrite(deg)
+            #adding values to servo angles based on clockwise or anti-clockwise
+            if value[0]!=None:
+                print(f"found!, stay still. Iterations: {verificationRecurrances-recurrances}")
+                recurrances+=1
             else:
-                deg+=1
-            
-        #turning clockwise when it reaches counter-clockwise end
-        if deg==120:
-            calibrationFlag=1
-            
-        #turning counter-clockwise when it reaches clockwise end
-        if deg==0:
-            calibrationFlag=0
-                        
-        if cv2.waitKey(1) & 0xFF==ord("q"):
-            self.end()
-        elif (value[0][1]!=None and recurrances>=verificationRecurrances): #did until here: changes: instead of returning y value only returned x and y value.
-            print("completed!")
-            return True
-        else:
-            self.calibration()
-                    
-    def main(self,audio=r"C:\Users\zanyi\Documents\GitHub\AIMV\FIRMATA+RPI\siren.wav"):
-        print("main code starting...")
-        self.value,self.frame=self.getAndPredict() 
-        self.movement=self.calculateServoMotorMovement(value=self.value) #adjust y value
-        self.motorSys.servoWrite(self.movement) #adjjust x value
-        self.motorSys.stop()
-        self.repositionCarRotation()
-        if self.detectForChoking():
-            self.audioMachine.playAudio(path=audio) #sound alarm
-            self.runStraight() #go straight until near enough
-            if self.motorSys.getDistance()<self.distThresh:
-                self.motorSys.stop()
-                #provide aid
+                recurrances=0
+                if calibrationFlag:
+                    deg-=1
+                else:
+                    deg+=1
+                
+            #turning clockwise when it reaches counter-clockwise end
+            if deg==120:
+                calibrationFlag=1
+                
+            #turning counter-clockwise when it reaches clockwise end
+            if deg==0:
+                calibrationFlag=0
+                            
+            if cv2.waitKey(1) & 0xFF==ord("q"):
+                self.end()
+                break
+            elif (value[0]!=False and recurrances>=verificationRecurrances): #did until here: changes: instead of returning y value only returned x and y value.
+                print("completed!")
+                return True
 
-        print(self.movement)
-        cv2.imshow("output",self.value[1])
-        
-        self.checkKeyPresses()
+    def main(self,audio=r"/home/hezy/Downloads/AIMV-main/FIRMATA+RPI/siren.wav",movement=50):
+        print("main code starting...")
+        self.movement=movement
+        while True:
+            print("detecting")
+            self.value,self.frame=self.getAndPredict() 
+            self.movement=self.calculateServoMotorMovement(value=self.value, initialAngle=self.movement) #adjust y value
+            self.motorSys.servoWrite(self.movement,delay=0) #adjust x value
+            self.repositionCarRotation(value=self.value)
+            self.is_choking=self.detectForChoking()
+            if self.is_choking:
+                self.audioMachine.playAudio(path=audio) #sound alarm
+                self.runStraight(willStop=False) #go straight until near enough
+                if self.motorSys.getDistance()<self.distThresh:
+                    self.motorSys.stop()
+                    #provide aid
+
+            print(self.movement)
+
+            cv2.imshow("output",self.frame)
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                self.end()
+                break
            
-    def calculateServoMotorMovement(self,value,initialAngle=50,steps=10,servoMax=100):
+    def calculateServoMotorMovement(self,value,initialAngle=50,steps=5,servoMax=100):
         #update servo angle
         angle = initialAngle
         midpointY=value[3][1]
@@ -110,16 +116,19 @@ class mainCode():
     def repositionCarRotation(self,value,willStop=False,delay=0):
         #determine some movement variables
         midpointX=value[3][0] #x angle
-        threshXLeft=value[2][0]
-        threshXRight=value[2][1]
+        threshXLeft=value[2][2]
+        threshXRight=value[2][3]
         
         if midpointX < threshXLeft:
+            print("going right")
             self.motorSys.stop()
-            self.motorSys.right(willStop=willStop,delay=delay)#move right if person is left. cancel out difference.
+            self.motorSys.clockwise(willStop=willStop,delay=delay)#move right if person is left. cancel out difference.
         elif midpointX > threshXRight:
+            print("going left")
             self.motorSys.stop()
-            self.motorSys.left(willStop=willStop,delay=delay)#move left if person is right. cancel out difference.
-            
+            self.motorSys.counter_clockwise(willStop=willStop,delay=delay)#move left if person is right. cancel out difference.
+        else:
+            self.motorSys.stop()
         return True
         
     def detectForChoking(self):
@@ -128,12 +137,6 @@ class mainCode():
 
     def runStraight(self,willStop=False,delay=0):
         self.motorSys.front(willStop=willStop,delay=delay)
-            
-    def checkKeyPresses(self):
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            self.end()
-        else:
-            self.main()
             
     def getAndPredict(self):
         ret,frame=self.cap.read()
@@ -148,7 +151,8 @@ class mainCode():
         return False
 
 if __name__ == "__main__":
-    system = mainCode()
-    system.calibration()
+    system = mainCode(GPU_Compute=False,com="/dev/ttyACM0",model_path=r"/home/hezy/Downloads/AIMV-main/FIRMATA+RPI/faceDetection.pt",
+                      audioPath=r"/home/hezy/Downloads/AIMV-main/FIRMATA+RPI/pop.wav")
+    # system.calibration()
     system.main()
     

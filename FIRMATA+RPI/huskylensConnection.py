@@ -1,5 +1,4 @@
 from HLPYTHON import HuskyLensLibrary
-import keyboard
 
 algorthimsByteID = {
     "ALGORITHM_OBJECT_TRACKING": "0100",
@@ -51,7 +50,7 @@ class lens():
         try:
             self.hl.getObjectByID(chokingID)
             return 1
-        except ValueError:
+        except IndexError:
             return 0
         
     

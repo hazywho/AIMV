@@ -66,6 +66,7 @@ class board():
         self.pin11Data=data
     
     def getDistance(self):
+        print("getting distance")
         self.ultrasonicTrigg.write(1)
         time.sleep(0.00001)
         self.ultrasonicTrigg.write(0)
@@ -80,6 +81,7 @@ class board():
         
     def servoWrite(self,value,delay=2):
         self.alignmentServo.write(value)
+        print("writing servo")
         time.sleep(delay)
         
     def __init__(self, com='/dev/ttyACM0', servo_pin=12, leftM1APin=2, leftM1BPin=3, leftM2APin=4, leftM2BPin=5, rightM1APin=6,
