@@ -3,19 +3,17 @@ from faceRecog import facialDatector
 from huskylensConnection import lens
 from speakerSystem import speaker
 import cv2
+from Internet.client import client
 
 #for reference: [self.angle[1],self.frame,[self.limitBottom,self.limitTop],[self.midpoint[0],self.midpoint[1]]] 
 class mainCode():
-    def __init__(self, com="COM8",GPU_Compute=True,printDetails=False,distThresh=20,audioPath = r"pop.wav",model_path=r"faceDetection.pt"): #distThresh is in cm
+    def __init__(self, com="COM8",printDetails=False,distThresh=20,audioPath = r"pop.wav"): #distThresh is in cm
         print("setting up cv2...")
         self.cap = cv2.VideoCapture(0)
-        self.height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        self.width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-        self.videoMachine = facialDatector(model_path=model_path,width=self.width,height=self.height)
-        if GPU_Compute:
-            print("connecting to GPU")
-            self.videoMachine.toGPU()
-            
+                    
+        print("setting up client...")
+        self.c = client()
+        
         print("setting up motor system...")
         self.motorSys=motorSystem.board(com=com)
         self.distThresh=distThresh
@@ -46,6 +44,8 @@ class mainCode():
                 flag=False
             print("starting calibration of AI lenses! (program will detect for human)")
             value,frame=self.getAndPredict() #run AI lenses (laptop) and get back value
+            if value==None:
+                continue #to counter internet losses
             
             cv2.imshow("frame",frame)
             self.motorSys.servoWrite(deg)
@@ -81,6 +81,8 @@ class mainCode():
         while True:
             print("detecting")
             self.value,self.frame=self.getAndPredict() 
+            if self.value==None:
+                continue
             self.movement=self.calculateServoMotorMovement(value=self.value, initialAngle=self.movement) #adjust y value
             self.motorSys.servoWrite(self.movement,delay=0) #adjust x value
             self.repositionCarRotation(value=self.value)
@@ -141,7 +143,8 @@ class mainCode():
     def getAndPredict(self):
         ret,frame=self.cap.read()
         frame=cv2.flip(frame,1)
-        value = self.videoMachine.getVal(frame=frame)
+        self.c.send(frame)
+        value = self.c.receive()
         return value,frame
     
     def end(self):

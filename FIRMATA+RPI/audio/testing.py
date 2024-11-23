@@ -58,3 +58,12 @@ mp3_command(CMD_PLAY, 0x0000)
 # Main loop to keep the script running
 while True:
     time.sleep(0.1)  # Prevent tight loop
+send = serial.Serial ("/dev/ttyAMA0", 9600)
+
+i = [0,10,45,90,135,180,225,255,225,180,135,90,45,10,0]
+
+while True:
+ for x in i:
+     send.write(bytes(x))
+     print(x)
+     time.sleep(1.5)

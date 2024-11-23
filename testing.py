@@ -1,61 +1,14 @@
-import matplotlib.pyplot as plt 
-import numpy as np 
-import wave
+import cv2
 
-# shows the sound waves 
-def visualize(path: str): 
-    
-    # reading the audio file 
-    raw = wave.open(path) 
-      
-    # reads all the frames  
-    # -1 indicates all or max frames 
-    signal = raw.readframes(1700) 
-    signal = np.frombuffer(signal, dtype ="int16") 
-      
-    # gets the frame rate 
-    f_rate = raw.getframerate() 
-  
-    # to Plot the x-axis in seconds  
-    # you need get the frame rate  
-    # and divide by size of your signal 
-    # to create a Time Vector  
-    # spaced linearly with the size  
-    # of the audio file 
-    time = np.linspace( 
-        0, # start 
-        len(signal) / f_rate, 
-        num = len(signal) 
-    ) 
+cap = cv2.VideoCapture(0)
 
-    plt.subplot(1,2,1)
-
-    plt.plot(time, signal) 
-      
-    # title of the plot 
-    plt.title("Sound Wave") 
-      
-    # label of x-axis 
-    plt.xlabel("Time") 
+while True:
+    ret,frame=cap.read()
+    print(frame.shape[0],frame.shape[1])
+    cv2.imshow("f",frame)
     
-    plt.subplot(1,2,2)
-    # actual plotting 
+    if cv2.waitKey(1) & 0xFF==ord("q"):
+        break
     
-    # title of the plot 
-    plt.title("Sound Wave") 
-      
-    # label of x-axis 
-    plt.xlabel("Time") 
-    # shows the plot  
-    # in new window 
-    plt.show() 
-  
-  
-if __name__ == "__main__": 
-    
-    # gets the command line Value 
-    path = r"C:\Users\zanyi\Documents\GitHub\AIMV\chaseAtlantic.wav"
-  
-    visualize(path)
-    
-    
+cap.release()
+cv2.destroyAllWindows()
