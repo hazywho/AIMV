@@ -3,7 +3,7 @@ from faceRecog import facialDatector
 from huskylensConnection import lens
 from speakerSystem import speaker
 import cv2
-from Internet.client import client
+from Internet.recv import client
 
 #for reference: [self.angle[1],self.frame,[self.limitBottom,self.limitTop],[self.midpoint[0],self.midpoint[1]]] 
 class mainCode():
@@ -143,8 +143,7 @@ class mainCode():
     def getAndPredict(self):
         ret,frame=self.cap.read()
         frame=cv2.flip(frame,1)
-        self.c.send(frame)
-        value = self.c.receive()
+        value = self.c.sendAndCalculate(frame=frame)
         return value,frame
     
     def end(self):

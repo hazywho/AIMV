@@ -19,21 +19,18 @@ class server():
         data_length_bytes = self.recvall(self.conn, 4)
 
         data_length = struct.unpack('!I', data_length_bytes)[0]
-
         # Receive the actual data
         data = self.recvall(self.conn, data_length)
 
-        print(data)
         received_Data= np.frombuffer(data,dtype="uint8")
         frame= cv2.imdecode(received_Data,cv2.IMREAD_COLOR)
-        
-        # Send back the length and data
-        self.conn.sendall(data_length_bytes)
-        self.conn.sendall(data)
         return frame
-
-    def end(self):
-        self.conn.close()
+    
+    def reply(self,data_length_bytes,data):
+        # Send back the length and data
+        self.conn.sendall(struct.pack('!I', data_length_bytes))
+        self.conn.sendall(data)
+        print("replied")
 
     def recvall(self, sock, count):
         """Helper function to receive exactly count bytes from the socket."""
@@ -49,10 +46,9 @@ class server():
 if __name__ == '__main__':
     m = server()
     while True:
-        frame = m.request()
+        frame = m.getFrame()
         cv2.imshow("f",frame)
         if cv2.waitKey(1) & 0xFF==ord("q"):
             break
     
-    m.end()
     cv2.destroyAllWindows()

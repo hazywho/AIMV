@@ -2,16 +2,17 @@ from serv import server
 import cv2
 from ultralytics import YOLO
 import keyboard
+import json
 
 #this code is to carry out the heavy processing on rpi through laptop. this saves computing power and prevents lagging & overheating of rpi.
-class compute():
+class cloud():
     def __init__(self,path=r"C:\Users\zanyi\Documents\GitHub\AIMV\faceDetection.pt",yPercentage=10, xPercentage=15):
         self.model = YOLO(path)
         self.model.to("cuda")
         self.s=server()
         
         #precompute some values
-        self.width,self.height=self.preprocess(frame=self.request())
+        self.width,self.height=640,480
         #calculate edge boxes
         self.bottomWidth = int(self.width/10)
         self.bottomHeight = int(self.height/10)
@@ -24,19 +25,10 @@ class compute():
         self.limitLeft=round(self.width/2+self.width*xPercentage/100)
         self.limitRight=round(self.width/2-self.width*xPercentage/100)
         print("init complete.")
-        return True
-    
-    def preprocess(self,frame):
-        height = frame.shape[1]
-        width = frame.shape[0]
-        return width,height
         
-    def request(self):
+    def request(self): #request frame from serv.py
         frame = self.s.getFrame()
         return frame
-        
-    def send(self,val):
-        self.s.send(val)
         
     #algo to get the biggest bounding box
     def getBiggest(self,l):
@@ -77,21 +69,19 @@ class compute():
             self.servoXlimit=100
             self.servoYlimit=90
             exists=True
-            return [exists,frame,[self.limitBottom,self.limitTop, self.limitLeft, self.limitRight],[midpoint[0],midpoint[1]]] 
+            return [[exists,exists],[self.limitBottom,self.limitTop], [self.limitLeft, self.limitRight],[midpoint[0],midpoint[1]]] 
         else:
-            return [None,frame,[self.limitBottom,self.limitTop],[None,(self.limitTop-self.limitBottom)/2]]
+            return [[0,0],[self.limitBottom,self.limitTop], [self.limitLeft, self.limitRight],[None,(self.limitTop-self.limitBottom)/2]]
         
-    def close(self):
-        self.s.close()
 
 #run this only when the code in the car is ran     
 if __name__=="__main__":
-    laptop=compute()
+    laptop=cloud()
     if laptop:
         while not keyboard.is_pressed("q"):
             values = laptop.calculate()
-            laptop.send(values)
+            json_data = json.dumps(values)
+            bytes_data = json_data.encode('utf-8')
+            laptop.s.reply(len(bytes_data),bytes_data)
     
-    laptop.close()
-            
     
