@@ -1,7 +1,7 @@
 import cv2
 import socket
 import struct
-import numpy as np
+import json
 
 HOST = 'shiroles'  # Replace with your server'self.s IP address
 PORT = 8000               # Must be the same as the server'self.s port
@@ -28,22 +28,19 @@ class client():
 
         # Receive the size of the incoming data
         data_length_bytes = self.recvall(self.s, 4)
-
         data_length = struct.unpack('!I', data_length_bytes)[0]
 
         # Receive the actual data
         data = self.recvall(self.s, data_length)
-
-        # Decode the received frame
-        frame_data = np.frombuffer(data, dtype='uint8')
-        print(frame_data)
+        json_data=data.decode("utf-8")
+        frame_data= json.loads(json_data)
         
         return frame_data
             
     def end(self):
         self.s.close()
 
-    def recvall(sock, count):
+    def recvall(self,sock, count):
         """Helper function to receive exactly count bytes from the socket."""
         buf = b''
         while count:
@@ -60,10 +57,12 @@ if __name__ == '__main__':
     while True:
         ret,frame=cap.read()
         # Display the received frame
-        r = m.sendAndCalculate()
-        cv2.imshow('Received Frame', r[1])
+        r = m.sendAndCalculate(frame=frame)
+
+        print(r)
         if cv2.waitKey(1) & 0xFF==ord("q"):
             break
+
     cap.release()
     cv2.destroyAllWindows()
-
+    m.end()
