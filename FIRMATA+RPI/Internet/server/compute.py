@@ -1,4 +1,4 @@
-from server import server
+from serv import server
 import cv2
 from ultralytics import YOLO
 import keyboard
@@ -32,7 +32,7 @@ class compute():
         return width,height
         
     def request(self):
-        frame = self.s.receive()
+        frame = self.s.getFrame()
         return frame
         
     def send(self,val):
