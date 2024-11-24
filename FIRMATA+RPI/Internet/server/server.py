@@ -1,4 +1,5 @@
 import socket
+import pickle
 
 class server():
     def __init__(self,host='',port=5000):
@@ -7,16 +8,35 @@ class server():
         self.s.listen()
         
     def send(self,item):
-        self.conn, self.addr = self.s.accept()
+        # self.conn, self.addr = self.s.accept()
         print("connected to",self.addr)
-        self.conn.send(bytes(str(item),"utf-8"))
+        item = pickle.dumps(item)
+        self.conn.send(item)
         print("sent")
         
-    def receive(self,maxByteSize=134217728): #recieve data
+    def receive(self): #recieve data
+        data=[]
+        while True:
+            packet = self.s.recv(4096)
+            if not packet: break
+            data.append(packet)
+        data_arr = pickle.loads(b"".join(data))
+        return data_arr
+        
+    def accept(self):
         self.conn, self.addr = self.s.accept()
-        self.data = self.conn.recv(maxByteSize)
-        print("received")
-        return self.data.decode("utf-8")
         
     def close(self):
         self.conn.close()
+
+import keyboard
+
+if __name__ == "__main__":
+    serverMachine = server()
+    while not keyboard.is_pressed("q"):
+        serverMachine.accept()
+        value = serverMachine.receive()
+        serverMachine.send("got it")
+        
+    serverMachine.close()
+        
