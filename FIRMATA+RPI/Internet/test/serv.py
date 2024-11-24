@@ -1,22 +1,47 @@
 import socket
-import cv2 as cv
+import struct
 
-# read a test image
-img = cv.imread('panda.jpg')
-# encode it to jpg format, you can do this without redundant file openings
-retval, buf = cv.imencode(".JPEG", img)
-# get number of bytes
-number_of_bytes = len(buf)
-# create a null terminated string
-header = "" + str(number_of_bytes) + "\0"
-# encode it to utf-8 byte format
-raw_header = bytes(header, "utf-8")
-# create server socket
-sock = socket.socket()
-sock.bind(('localhost', 8000))
-sock.listen()
-conn, addr = sock.accept()
-# send header first, reciever will use it to recieve image
-conn.send(raw_header)
-# send the rest of image
-conn.send(buf)
+HOST = ''  # Listen on all network interfaces
+PORT = 8000     # Port to listen on
+
+def main():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((HOST, PORT))
+    s.listen(5)
+    print(f"Server listening on {HOST}:{PORT}")
+
+    conn, addr = s.accept()
+    print(f"Connected by {addr}")
+
+    try:
+        while True:
+            # Receive the length of the incoming data
+            data_length_bytes = recvall(conn, 4)
+            if not data_length_bytes:
+                break
+            data_length = struct.unpack('!I', data_length_bytes)[0]
+
+            # Receive the actual data
+            data = recvall(conn, data_length)
+            if not data:
+                break
+
+            # Send back the length and data
+            conn.sendall(data_length_bytes)
+            conn.sendall(data)
+    finally:
+        conn.close()
+
+def recvall(sock, count):
+    """Helper function to receive exactly count bytes from the socket."""
+    buf = b''
+    while count:
+        newbuf = sock.recv(count)
+        if not newbuf:
+            return None
+        buf += newbuf
+        count -= len(newbuf)
+    return buf
+
+if __name__ == '__main__':
+    main()
