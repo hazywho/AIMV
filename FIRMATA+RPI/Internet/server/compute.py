@@ -1,9 +1,8 @@
-from serv import server
+from recv import server
 import cv2
 from ultralytics import YOLO
 import keyboard
 import json
-import socket
 
 #this code is to carry out the heavy processing on rpi through laptop. this saves computing power and prevents lagging & overheating of rpi.
 class cloud():
@@ -39,7 +38,7 @@ class cloud():
         #precompute some values
         frame=self.request()
         prediction = self.model.predict(source=frame,stream_buffer=False, classes=[0],verbose=False)
-        exists=False
+        exists=1
         if prediction[0]:
             #declare and assign variables
             totalBoxes = sorted(list(prediction[0].boxes.xyxy),key=self.getBiggest,reverse=True)
@@ -69,7 +68,7 @@ class cloud():
             #calculate servo angles
             self.servoXlimit=100
             self.servoYlimit=90
-            exists=True
+            exists=0
             return [[exists,exists],[self.limitBottom,self.limitTop], [self.limitLeft, self.limitRight],[midpoint[0],midpoint[1]]] 
         else:
             return [[0,0],[self.limitBottom,self.limitTop], [self.limitLeft, self.limitRight],[None,(self.limitTop-self.limitBottom)/2]]

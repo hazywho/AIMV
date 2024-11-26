@@ -3,7 +3,7 @@ from faceRecog import facialDatector
 from huskylensConnection import lens
 from speakerSystem import speaker
 import cv2
-from Internet.recv import client
+from Internet.serv import client
 
 #for reference: [self.angle[1],self.frame,[self.limitBottom,self.limitTop],[self.midpoint[0],self.midpoint[1]]] 
 class mainCode():
@@ -81,7 +81,7 @@ class mainCode():
         while True:
             print("detecting")
             self.value,self.frame=self.getAndPredict() 
-            if self.value==None:
+            if self.value[0][0]==0 and self.value[0][1]==0:
                 continue
             self.movement=self.calculateServoMotorMovement(value=self.value, initialAngle=self.movement) #adjust y value
             self.motorSys.servoWrite(self.movement,delay=0) #adjust x value
@@ -105,8 +105,8 @@ class mainCode():
         #update servo angle
         angle = initialAngle
         midpointY=value[3][1]
-        threshYBottom=value[2][0]
-        threshYTop=value[2][1]
+        threshYBottom=value[1][0]
+        threshYTop=value[1][1]
         
         if midpointY < threshYBottom and angle>0:
             angle-=steps #i want to make it bezier
@@ -118,8 +118,8 @@ class mainCode():
     def repositionCarRotation(self,value,willStop=False,delay=0):
         #determine some movement variables
         midpointX=value[3][0] #x angle
-        threshXLeft=value[2][2]
-        threshXRight=value[2][3]
+        threshXLeft=value[2][0]
+        threshXRight=value[2][1]
         
         if midpointX < threshXLeft:
             print("going right")
