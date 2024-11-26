@@ -1,9 +1,9 @@
+import cv2
 import socket
 import struct
-import numpy as np
-import cv2
 
-class Server:
+#is actually server
+class client():
     def __init__(self, PORT=8000, HOST=""):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.bind((HOST, PORT))
@@ -12,45 +12,39 @@ class Server:
         self.conn, addr = self.s.accept()
         print(f"Connected by {addr}")
 
-    def get_frame(self):
-        # Receive the length of the incoming data
-        data_length_bytes = self.recvall(self.conn, 4)
-        if not data_length_bytes:
-            return None
-        data_length = struct.unpack('!I', data_length_bytes)[0]
+    def encode_frame(self, frame):
+        # Encode the frame as JPEG
+        result, frame_encoded = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+        data = frame_encoded.tobytes()
+        # Prepare the data length
+        data_length = struct.pack('!I', len(data))
+        return data_length, data
 
-        # Receive the actual data
-        data = self.recvall(self.conn, data_length)
-        if not data:
-            return None
-
-        received_data = np.frombuffer(data, dtype="uint8")
-        frame = cv2.imdecode(received_data, cv2.IMREAD_COLOR)
-        return frame
-
-    def recvall(self, sock, count):
-        """Helper function to receive exactly count bytes from the socket."""
-        buf = b''
-        while count:
-            newbuf = sock.recv(count)
-            if not newbuf:
-                return None
-            buf += newbuf
-            count -= len(newbuf)
-        return buf
+    def send_frame(self, frame):
+        data_length, data = self.encode_frame(frame)
+        try:
+            self.conn.sendall(data_length)
+            self.conn.sendall(data)
+        except BrokenPipeError:
+            print("Connection closed by the client.")
+            return False
+        return True
 
     def close(self):
         self.conn.close()
         self.s.close()
 
 if __name__ == '__main__':
-    server = Server()
+    cap = cv2.VideoCapture(0)  # Open the default camera
+    server = client()
     while True:
-        frame = server.get_frame()
-        if frame is None:
+        ret, frame = cap.read()
+        if not ret:
             break
-        cv2.imshow("Received Frame", frame)
+        success = server.send_frame(frame)
+        if not success:
+            break
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
-    cv2.destroyAllWindows()
+    cap.release()
     server.close()

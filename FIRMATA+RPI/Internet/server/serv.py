@@ -1,38 +1,55 @@
-import cv2
 import socket
 import struct
+import numpy as np
+import cv2
 
-class Client:
-    def __init__(self, HOST='localhost', PORT=8000):
+#is actually client
+class server():
+    def __init__(self, HOST='raspberrypi', PORT=8000):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((HOST, PORT))
         print(f"Connected to {HOST}:{PORT}")
 
-    def encode_frame(self, frame):
-        # Encode the frame as JPEG
-        result, frame_encoded = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
-        data = frame_encoded.tobytes()
-        # Prepare the data length
-        data_length = struct.pack('!I', len(data))
-        return data_length, data
+    def get_frame(self):
+        # Receive the length of the incoming data
+        data_length_bytes = self.recvall(4)
+        if not data_length_bytes:
+            return None
+        data_length = struct.unpack('!I', data_length_bytes)[0]
 
-    def send_frame(self, frame):
-        data_length, data = self.encode_frame(frame)
-        self.s.sendall(data_length)
-        self.s.sendall(data)
+        # Receive the actual data
+        data = self.recvall(data_length)
+        if not data:
+            return None
+
+        # Decode the frame
+        received_data = np.frombuffer(data, dtype="uint8")
+        frame = cv2.imdecode(received_data, cv2.IMREAD_COLOR)
+        return frame
+
+    def recvall(self, count):
+        """Helper function to receive exactly count bytes from the socket."""
+        buf = b''
+        while count:
+            newbuf = self.s.recv(count)
+            if not newbuf:
+                return None
+            buf += newbuf
+            count -= len(newbuf)
+        return buf
 
     def close(self):
         self.s.close()
 
 if __name__ == '__main__':
-    cap = cv2.VideoCapture(0)  # Open the default camera
-    client = Client()
+    client = server()
     while True:
-        ret, frame = cap.read()
-        if not ret:
+        frame = client.get_frame()
+        if frame is None:
+            print("No frame received. Exiting...")
             break
-        client.send_frame(frame)
+        cv2.imshow("Received Frame", frame)
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
-    cap.release()
+    cv2.destroyAllWindows()
     client.close()
