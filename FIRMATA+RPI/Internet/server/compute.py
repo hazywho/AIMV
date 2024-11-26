@@ -3,6 +3,7 @@ import cv2
 from ultralytics import YOLO
 import keyboard
 import json
+import socket
 
 #this code is to carry out the heavy processing on rpi through laptop. this saves computing power and prevents lagging & overheating of rpi.
 class cloud():

@@ -3,11 +3,9 @@ import socket
 import struct
 import json
 
-HOST = 'shiroles'  # Replace with your server'self.s IP address
-PORT = 8000               # Must be the same as the server'self.s port
 
-class client():
-    def __init__(self):
+class client(): # Replace with your server'self.s IP address Must be the same as the server'self.s port
+    def __init__(self,HOST='shiroles',PORT=8000):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((HOST, PORT))
         

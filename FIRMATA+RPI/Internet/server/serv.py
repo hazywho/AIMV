@@ -3,10 +3,8 @@ import struct
 import numpy as np
 import cv2
 
-HOST = ''  # Listen on all network interfaces
-PORT = 8000     # Port to listen on
 class server():
-    def __init__(self):
+    def __init__(self,PORT=8000,HOST=""):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.bind((HOST, PORT))
         self.s.listen(5)
