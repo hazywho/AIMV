@@ -10,7 +10,7 @@ class server():
         self.s.connect((HOST, PORT))
         print(f"Connected to {HOST}:{PORT}")
 
-    def get_frame(self):
+    def getFrame(self):
         # Receive the length of the incoming data
         data_length_bytes = self.recvall(4)
         if not data_length_bytes:
@@ -27,6 +27,12 @@ class server():
         frame = cv2.imdecode(received_data, cv2.IMREAD_COLOR)
         return frame
 
+    def reply(self,data_length_bytes,data):
+        # Send back the length and data
+        self.s.sendall(struct.pack('!I', data_length_bytes))
+        self.s.sendall(data)
+        print("replied")
+        
     def recvall(self, count):
         """Helper function to receive exactly count bytes from the socket."""
         buf = b''
@@ -44,7 +50,7 @@ class server():
 if __name__ == '__main__':
     client = server()
     while True:
-        frame = client.get_frame()
+        frame = client.getFrame()
         if frame is None:
             print("No frame received. Exiting...")
             break
