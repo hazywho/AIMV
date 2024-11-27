@@ -6,7 +6,7 @@ import json
 
 #this code is to carry out the heavy processing on rpi through laptop. this saves computing power and prevents lagging & overheating of rpi.
 class cloud():
-    def __init__(self,path=r"C:\Users\zanyi\Documents\GitHub\AIMV\faceDetection.pt",yPercentage=10, xPercentage=15):
+    def __init__(self,path=r"C:\Users\zanyi\Documents\GitHub\AIMV\faceDetection.pt",yPercentage=10, xPercentage=25):
         self.model = YOLO(path)
         self.model.to("cuda")
         self.s=server()
@@ -50,12 +50,12 @@ class cloud():
                         midpoint[1]+abs(round((boxes[3]-boxes[1])/2)))
             
             #calculate servo angles
-            self.servoXlimit=100
+            self.servoqXlimit=100
             self.servoYlimit=90
             exists=1
-            return [[exists,exists],[self.limitBottom,self.limitTop], [self.limitLeft, self.limitRight],[midpoint[0],midpoint[1]],[boxes[0],boxes[1]],[boxes[2],boxes[3]],[confidence,classes]] 
+            return [[exists,exists],[self.limitBottom,self.limitTop], [self.limitLeft, self.limitRight],[midpoint[0],midpoint[1]],[boxes[0],boxes[1]],[boxes[2],boxes[3]],[confidence,classes],[self.width,self.height]] 
         else:
-            return [[0,0],[self.limitBottom,self.limitTop], [self.limitLeft, self.limitRight],[None,(self.limitTop-self.limitBottom)/2],[0,0],[0,0],[0,0]]
+            return [[0,0],[self.limitBottom,self.limitTop], [self.limitLeft, self.limitRight],[None,(self.limitTop-self.limitBottom)/2],[0,0],[0,0],[0,0],[0,0]]
 
 #run this only when the code in the car is ran     
 if __name__=="__main__":
