@@ -87,7 +87,7 @@ class mainCode():
             self.movement=self.calculateServoMotorMovement(value=self.value, initialAngle=self.movement) #adjust y value
             self.motorSys.servoWrite(self.movement,delay=0) #adjust x value
             self.repositionCarRotation(value=self.value)
-            self.is_choking=self.detectForChoking()
+            self.is_choking=self.detectForChoking(id=1)
              
             if self.is_choking:
                 self.audioMachine.playAudio(path=self.audioPath) #sound alarm
