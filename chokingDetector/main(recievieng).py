@@ -51,7 +51,7 @@ class mainCode():
             # cv2.imshow("frame",frame)
             self.motorSys.servoWrite(deg)
             #adding values to servo angles based on clockwise or anti-clockwise
-            if value[0]!=None:
+            if value[0]!=0:
                 print(f"found!, stay still. Iterations: {verificationRecurrances-recurrances}")
                 recurrances+=1
             else:
@@ -82,19 +82,20 @@ class mainCode():
         while True:
             print("detecting")
             self.value,self.frame=self.getAndPredict() 
-            if self.value[0][0]==0 and self.value[0][1]==0:
+            if self.value[0][0]==0:
                 continue
             self.movement=self.calculateServoMotorMovement(value=self.value, initialAngle=self.movement) #adjust y value
             self.motorSys.servoWrite(self.movement,delay=0) #adjust x value
             self.repositionCarRotation(value=self.value)
             self.is_choking=self.detectForChoking()
+             
             if self.is_choking:
                 self.audioMachine.playAudio(path=self.audioPath) #sound alarm
-                self.motorSys.front(willStop=False,delay=0) #go straight until near enough
-                # if self.motorSys.getDistance()<self.distThresh:
-                #     self.motorSys.stop()
-                #     #provide aid
-
+                if self.value[4][0]==1:
+                    self.motorSys.stop()
+                else:
+                    self.motorSys.front(willStop=False,delay=0) #go straight until near enough
+                    
             print(self.movement)
             if show==True:
                 cv2.imshow("output",self.frame)
