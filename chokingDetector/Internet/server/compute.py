@@ -55,7 +55,7 @@ class server():
 #this code is to carry out the heavy processing on rpi through laptop. this saves computing power and prevents lagging & overheating of rpi.
 class cloud():
     def __init__(self,path=r"C:\Users\zanyi\Documents\GitHub\AIMV\faceDetection.pt",yPercentage=10, 
-                 xPercentage=25,threshPercent=10,yOffset=0
+                 xPercentage=20,threshPercent=10,yOffset=0
                  ):
         self.model = YOLO(path)
         self.model.to("cuda")
@@ -69,7 +69,7 @@ class cloud():
         self.topWidth = int(self.width)-self.bottomWidth
         self.topHeight = int(self.height)-self.bottomHeight
         #y thresholds
-        self.limitTop=round(self.height/2+self.height*yPercentage/100)-yOffsetq2q2
+        self.limitTop=round(self.height/2+self.height*yPercentage/100)
         self.limitBottom=round(self.height/2-self.height*yPercentage/100)-yOffset
         #x thresholds
         self.limitLeft=round(self.width/2+self.width*xPercentage/100)
