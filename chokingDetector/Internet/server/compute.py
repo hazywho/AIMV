@@ -54,7 +54,9 @@ class server():
 
 #this code is to carry out the heavy processing on rpi through laptop. this saves computing power and prevents lagging & overheating of rpi.
 class cloud():
-    def __init__(self,path=r"C:\Users\zanyi\Documents\GitHub\AIMV\faceDetection.pt",yPercentage=10, xPercentage=15):
+    def __init__(self,path=r"C:\Users\zanyi\Documents\GitHub\AIMV\faceDetection.pt",yPercentage=10, 
+                 xPercentage=25,threshPercent=10
+                 ):
         self.model = YOLO(path)
         self.model.to("cuda")
         self.s=server()
@@ -62,8 +64,8 @@ class cloud():
         #precompute some values
         self.width,self.height=640,480
         #calculate edge boxes
-        self.bottomWidth = int(self.width/10)
-        self.bottomHeight = int(self.height/10)
+        self.bottomWidth = int(self.width/100*threshPercent)
+        self.bottomHeight = int(self.height/100*threshPercent)
         self.topWidth = int(self.width)-self.bottomWidth
         self.topHeight = int(self.height)-self.bottomHeight
         #y thresholds
@@ -82,11 +84,16 @@ class cloud():
     def getBiggest(self,l):
         return abs(l[2]-l[0])+abs(l[3]-l[1])
     
+    def closeEnough(self,sizeX,sizeY,limX,limY):
+        if sizeX>=limX or sizeY>=limY:
+            return True
+        return False
+    
     def calculate(self):
         #precompute some values
         frame=self.request()
         prediction = self.model.predict(source=frame,stream_buffer=False, classes=[0],verbose=False)
-        exists=1
+        exists=0
         if prediction[0]:
             #declare and assign variables
             totalBoxes = sorted(list(prediction[0].boxes.xyxy),key=self.getBiggest,reverse=True)
@@ -100,8 +107,12 @@ class cloud():
             #putting boxes on detrected items
             cv2.rectangle(frame, (boxes[0],boxes[1]),(boxes[2],boxes[3]),color=(255,0,0),thickness=2)
 
-            #mark edge boxes
+            #mark edge boxes (IMPORTANT FOR DISTANCE!!!)
             cv2.rectangle(frame,(self.bottomHeight,self.topHeight),(self.topWidth,self.bottomWidth),color=(255,0,0),thickness=1) 
+            limitY = abs(self.topHeight-self.bottomHeight)
+            limitX = abs(self.topWidth-self.bottomWidth)
+            x,y=abs(boxes[0]-boxes[2]),abs(boxes[1]-boxes[3])
+            closeEnough = self.closeEnough(sizeX=x,sizeY=y,limX=limitX,limY=limitY)
             
             #y top/bottom limit
             frame = cv2.line(frame, (0,self.limitTop), (round(self.width),self.limitTop), (0,255,0), 1)
@@ -117,10 +128,10 @@ class cloud():
             #calculate servo angles
             self.servoXlimit=100
             self.servoYlimit=90
-            exists=0
-            return [[exists,exists],[self.limitBottom,self.limitTop], [self.limitLeft, self.limitRight],[midpoint[0],midpoint[1]]] 
+            exists=1
+            return [[exists,exists],[self.limitBottom,self.limitTop], [self.limitLeft, self.limitRight],[midpoint[0],midpoint[1]], [closeEnough,closeEnough]] 
         else:
-            return [[0,0],[self.limitBottom,self.limitTop], [self.limitLeft, self.limitRight],[None,(self.limitTop-self.limitBottom)/2]]
+            return [[0,0],[self.limitBottom,self.limitTop], [self.limitLeft, self.limitRight],[0,(self.limitTop-self.limitBottom)/2],[0,0]]
         
 
 #run this only when the code in the car is ran     
