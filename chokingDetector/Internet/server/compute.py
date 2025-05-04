@@ -8,7 +8,7 @@ import cv2
 
 #is actually client
 class server():
-    def __init__(self, HOST='raspberrypi', PORT=5000):
+    def __init__(self, HOST='raspberrypi', PORT=6000):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((HOST, PORT))
         print(f"Connected to {HOST}:{PORT}")
